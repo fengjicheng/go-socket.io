@@ -12,18 +12,18 @@ import (
 	"time"
 )
 
-const contetx = "spreadjs"
+const context = "spreadjs"
 
 func main() {
 	// 设置文件服务器路由
-	http.HandleFunc(fmt.Sprintf("/%s/", contetx), enableCORS(streamFileHandler))
+	http.HandleFunc(fmt.Sprintf("/%s/", context), enableCORS(streamFileHandler))
 	// 设置用户数据API路由
 	http.HandleFunc("/api/users", enableCORS(usersHandler))
 
 	// 启动服务器
 	port := "80"
 	fmt.Printf("服务器运行在端口 %s 上...\n", port)
-	fmt.Println(fmt.Sprintf("访问 http://localhost/%s/**", contetx))
+	fmt.Println(fmt.Sprintf("访问 http://localhost/%s/**", context))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
 
@@ -93,6 +93,15 @@ func streamFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type Result struct {
+	Success bool   `json:"success"`
+	Code    string `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
+	Data    []any  `json:"data,omitempty"`
+	Total   int    `json:"total,omitempty"`
+	Summary any    `json:"summary,omitempty"`
+}
+
 // User 表示用户数据结构
 type User struct {
 	ID        int    `json:"id"`
@@ -112,7 +121,11 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // generateMockUsers 生成模拟用户数据
-func generateMockUsers(count int) []User {
+func generateMockUsers(count int) Result {
+	result := Result{
+		Success: true,
+		Total:   count,
+	}
 	rand.Seed(time.Now().UnixNano())
 
 	names := []string{
@@ -122,7 +135,7 @@ func generateMockUsers(count int) []User {
 
 	domains := []string{"gmail.com", "yahoo.com", "hotmail.com", "example.com"}
 
-	var result []User
+	var users []any
 
 	for i := 1; i <= count; i++ {
 		name := names[rand.Intn(len(names))]
@@ -133,7 +146,7 @@ func generateMockUsers(count int) []User {
 		createdAgo := time.Duration(rand.Intn(365*24)) * time.Hour
 		createdAt := time.Now().Add(-createdAgo).Format(time.RFC3339)
 
-		result = append(result, User{
+		users = append(users, User{
 			ID:        i,
 			Name:      name,
 			Email:     email,
@@ -141,6 +154,8 @@ func generateMockUsers(count int) []User {
 			CreatedAt: createdAt,
 		})
 	}
+
+	result.Data = users
 
 	return result
 }
