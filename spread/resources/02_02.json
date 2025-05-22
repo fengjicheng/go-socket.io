@@ -9,7 +9,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "唯一标识ID"
+            "description": "唯一标识ID（如绩效记录ID）"
           },
           "deptName": {
             "type": "string",
@@ -31,17 +31,19 @@
             "type": "string",
             "description": "岗位序列"
           },
-          "employeeType": {
-            "type": "string",
-            "description": "人员类型"
-          },
-          "employeeStatus": {
-            "type": "string",
-            "description": "人员状态"
-          },
           "salaryCompanyName": {
             "type": "string",
             "description": "工资发放公司"
+          },
+          "duePerformance": {
+            "type": "number",
+            "minimum": 0,
+            "description": "应发绩效"
+          },
+          "actualPerformance": {
+            "type": "number",
+            "minimum": 0,
+            "description": "实发绩效"
           },
           "idCardNumber": {
             "type": "string",
@@ -51,41 +53,24 @@
             "type": "string",
             "description": "员工类别"
           },
-          "currentMonthIncome": {
+          "quarterFirstMonthPerformance": {
             "type": "number",
-            "description": "当月收入"
+            "minimum": 0,
+            "description": "季度首月绩效"
           },
-          "currentMonthPerformance": {
+          "quarterMiddleMonthPerformance": {
             "type": "number",
-            "description": "当月应发绩效"
+            "minimum": 0,
+            "description": "季度次月绩效"
           },
-          "companyHousingFund": {
+          "quarterLastMonthPerformance": {
             "type": "number",
-            "description": "公司缴纳公积金"
-          },
-          "companyMedicalInsurance": {
-            "type": "number",
-            "description": "单位医疗保险"
-          },
-          "companyPensionInsurance": {
-            "type": "number",
-            "description": "单位养老保险"
-          },
-          "companyUnemploymentInsurance": {
-            "type": "number",
-            "description": "单位失业保险"
-          },
-          "companyWorkInjuryInsurance": {
-            "type": "number",
-            "description": "单位工伤保险"
+            "minimum": 0,
+            "description": "季度末月绩效"
           },
           "performanceDifference": {
             "type": "number",
-            "description": "绩效差异"
-          },
-          "currentMonthTotalCost": {
-            "type": "number",
-            "description": "本月成本合计"
+            "description": "绩效差异（应发-实发）"
           }
         }
       }
