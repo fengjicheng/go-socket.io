@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "properties": {
+    "data": {
+      "dataFieldType": "table",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "唯一标识ID"
+          },
+          "reimbursementNo": {
+            "type": "string",
+            "description": "报销单号"
+          },
+          "attendanceStatus": {
+            "type": "string",
+            "description": "考勤状态"
+          },
+          "name": {
+            "type": "string",
+            "description": "姓名"
+          },
+          "idCardNumber": {
+            "type": "string",
+            "description": "身份证号"
+          },
+          "staffNo": {
+            "type": "string",
+            "description": "编号（员工工号）"
+          },
+          "deptName": {
+            "type": "string",
+            "description": "部门"
+          },
+          "position": {
+            "type": "string",
+            "description": "岗位"
+          },
+          "startDate": {
+            "type": "string",
+            "description": "开始时间"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "结束时间"
+          },
+          "dayNums": {
+            "type": "integer",
+            "description": "天数"
+          },
+          "laborCost": {
+            "type": "number",
+            "description": "人工费"
+          },
+          "contractId": {
+            "type": "string",
+            "description": "合同号"
+          },
+          "projectName": {
+            "type": "string",
+            "description": "项目名称"
+          },
+          "projectCode": {
+            "type": "string",
+            "description": "项目编码"
+          },
+          "customersName": {
+            "type": "string",
+            "description": "客户名称"
+          },
+          "customersCode": {
+            "type": "string",
+            "description": "客户编码"
+          }
+        }
+      }
+    }
+  },
+  "type": "object"
+}

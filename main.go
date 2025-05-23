@@ -23,7 +23,9 @@ func main() {
 	// 启动服务器
 	port := "80"
 	fmt.Printf("服务器运行在端口 %s 上...\n", port)
-	fmt.Println(fmt.Sprintf("访问 http://localhost/%s/**", context))
+	pid := os.Getpid()
+	fmt.Printf("当前进程的ID是: %d\n", pid)
+	fmt.Println(fmt.Sprintf("访问 http://localhost/%s/", context))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
 

@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "properties": {
+    "data": {
+      "dataFieldType": "table",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "contractId": {
+            "type": "string",
+            "description": "合同号（如A250-19）"
+          },
+          "projectName": {
+            "type": "string",
+            "description": "项目名称（如晶奇公司（其他））"
+          },
+          "projectCode": {
+            "type": "string",
+            "description": "项目编码（如10011300000002）"
+          },
+          "dayNums": {
+            "type": "integer",
+            "description": "天数"
+          },
+          "laborCost": {
+            "type": "number",
+            "description": "人工费"
+          }
+        }
+      }
+    }
+  },
+  "type": "object"
+}
