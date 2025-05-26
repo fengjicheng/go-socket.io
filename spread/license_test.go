@@ -48,7 +48,7 @@ func TestDistributionLicense(t *testing.T) {
 	//}
 	//opts = append(opts, WithCreateTime("2025-05-15 04:31:16"))
 	opts = append(opts, WithDeadline("240h"))
-	opts = append(opts, WithLicenseType(0))
+	opts = append(opts, WithLicenseType(Official))
 	opts = append(opts, WithPlugin(int(PluginDesigner)))
 	opts = append(opts, WithPlugin(int(PluginPivotTable)))
 	opts = append(opts, WithPlugin(int(PluginReportSheet)))

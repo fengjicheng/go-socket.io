@@ -11,6 +11,14 @@ import (
 	"time"
 )
 
+type LicType int // 授权类型 0 试用版 1 正式版 2 分发版
+
+const (
+	Trial        LicType = iota // 试用版
+	Official                    // 正式版
+	Distribution                // 分发版
+)
+
 type LicenseReader interface {
 	Read(lic string) License           // 读取解析授权文件
 	ReadFromFile(file os.File) License // 从文件读取解析授权文件
@@ -55,7 +63,7 @@ type options struct {
 	webDesigner   bool // 是否在线设计器
 
 	//designer int // 1 本地设计器 2 在线设计器 3 本地设计器+在线设计器
-	licType int // 授权类型 0 试用版 1 正式版 2 分发版
+	licType LicType // 授权类型 0 试用版 1 正式版 2 分发版
 }
 
 type license struct {
@@ -199,10 +207,10 @@ func (l *license) build() {
 	evaluation := true
 	distribution := false
 	switch opts.licType {
-	case 0:
-	case 1:
+	case Trial:
+	case Official:
 		evaluation = false
-	case 2:
+	case Distribution:
 		distribution = true
 		evaluation = false
 	default:
@@ -380,7 +388,7 @@ func WithPrefix(gen PrefixGen) Options {
 	}
 }
 
-func WithLicenseType(licType int) Options {
+func WithLicenseType(licType LicType) Options {
 	return func(opts *options) {
 		opts.licType = licType
 	}
