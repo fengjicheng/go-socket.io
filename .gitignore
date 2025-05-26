@@ -28,3 +28,4 @@ go.work.sum
 .idea
 demo.go
 node_modules
+spread/*.js

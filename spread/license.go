@@ -26,6 +26,7 @@ type License interface {
 	LicenseReader
 
 	PrefixGenerate(data Data) string // 生成前缀
+	Bytes() []byte                   // 授权文件内容
 	Output(writer io.Writer) error   // 输出授权文件
 
 	json.Marshaler
@@ -165,14 +166,22 @@ func (l *license) PrefixGenerate(data Data) string {
 	return fmt.Sprintf("%s%s", "E", data.Id)
 }
 
-func (l *license) Output(writer io.Writer) error {
+func (l *license) Bytes() []byte {
 	l.build()
 	buf := bytes.Buffer{}
 	buf.WriteString(l.prefix)
 	buf.WriteByte('#')
 	buf.WriteString(l.opts.sep)
 	buf.WriteString(l.licData)
-	_, err := writer.Write(buf.Bytes())
+	return buf.Bytes()
+}
+
+func (l *license) String() string {
+	return string(l.Bytes())
+}
+
+func (l *license) Output(writer io.Writer) error {
+	_, err := writer.Write(l.Bytes())
 	if err != nil {
 		return err
 	}

@@ -46,7 +46,7 @@ func TestDistributionLicense(t *testing.T) {
 	//"Exp":"20250525","Crt":"20250515 043116",
 	//"Prd":[{"N":"Spread JS v.18","C":"BJIH"}]
 	//}
-	opts = append(opts, WithCreateTime("2025-05-15 04:31:16"))
+	//opts = append(opts, WithCreateTime("2025-05-15 04:31:16"))
 	opts = append(opts, WithDeadline("240h"))
 	opts = append(opts, WithLicenseType(0))
 	opts = append(opts, WithPlugin(int(PluginDesigner)))
@@ -61,13 +61,21 @@ func TestDistributionLicense(t *testing.T) {
 	assert.NotNil(t, sjs)
 	data := sjs.GetData()
 	assert.NotNil(t, data)
-	assert.Equal(t, "20250515 043116", data.CreateTime)
-	assert.Equal(t, "20250525", data.Expiration)
+	//assert.Equal(t, "20250515 043116", data.CreateTime)
+	//assert.Equal(t, "20250525", data.Expiration)
+	file, err := os.OpenFile("license.js", os.O_TRUNC|os.O_WRONLY, 0644)
+	assert.Nil(t, err)
 	_ = sjs.Output(os.Stdout)
 	println()
+
+	_, _ = file.WriteString(fmt.Sprintf("// 表格授权，授权截止时间：%s\n", sjs.GetData().Expiration))
+	_, _ = file.WriteString(fmt.Sprintf("GC.Spread.Sheets.LicenseKey = '%v';\n", sjs))
+	_, _ = file.WriteString(fmt.Sprintf("// 设计器授权，授权截止时间：%s\n", sjs.GetData().Expiration))
+	_, _ = file.WriteString(fmt.Sprintf("GC.Spread.Sheets.Designer.LicenseKey = '%v';\n", sjs))
+
 }
 
-func TestWebDisignerLicense(t *testing.T) {
+func TestWebDesignerLicense(t *testing.T) {
 	webDesigner := ReadLicense(designerFullLic)
 	println(webDesigner)
 	opts := make([]Options, 0)
