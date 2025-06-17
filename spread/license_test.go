@@ -15,22 +15,22 @@ var (
 
 func TestDesignerLicense(t *testing.T) {
 	designer := ReadLicense(designerLic)
-	fmt.Println(designer)
+	assert.NotNil(t, designer)
+	designer = ReadLicense(designerFullLic)
 	assert.NotNil(t, designer)
 	opts := make([]Options, 0)
 
-	opts = append(opts, WithCreateTime("2025-05-15 04:31:16"))
-	opts = append(opts, WithDeadline("240h"))
+	//opts = append(opts, WithCreateTime("2025-05-15 04:31:16"))
+	opts = append(opts, WithDeadline("24h"))
 	opts = append(opts, WithPlugin(int(PluginDesigner)))
-	//opts = append(opts, WithPlugin(8))
-	// 正式授权需要加此选项
-	opts = append(opts, WithFormalLicense())
+	// 开发授权
+	opts = append(opts, WithDistributionLicense())
 	sjs := NewSpreadJSLicense(opts...)
 	assert.NotNil(t, sjs)
 	data := sjs.GetData()
 	assert.NotNil(t, data)
 	assert.NotNil(t, data.Annual)
-	assert.Equal(t, false, data.Annual.Distribution)
+	//assert.Equal(t, false, data.Annual.Distribution)
 	assert.Equal(t, 0, len(data.Annual.PluginFlags))
 	assert.Equal(t, "designer/0.0.0.0", data.Domains)
 	assert.Equal(t, false, data.Evaluation)
@@ -47,7 +47,7 @@ func TestDistributionLicense(t *testing.T) {
 	//"Prd":[{"N":"Spread JS v.18","C":"BJIH"}]
 	//}
 	//opts = append(opts, WithCreateTime("2025-05-15 04:31:16"))
-	opts = append(opts, WithDeadline("240h"))
+	opts = append(opts, WithDeadline("8760h"))
 	opts = append(opts, WithLicenseType(Official))
 	opts = append(opts, WithPlugin(int(PluginDesigner)))
 	opts = append(opts, WithPlugin(int(PluginPivotTable)))

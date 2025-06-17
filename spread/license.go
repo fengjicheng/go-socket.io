@@ -396,12 +396,12 @@ func WithLicenseType(licType LicType) Options {
 
 // WithFormalLicense 正式授权
 func WithFormalLicense() Options {
-	return WithLicenseType(1)
+	return WithLicenseType(Official)
 }
 
 // WithDistributionLicense 分发授权
 func WithDistributionLicense() Options {
-	return WithLicenseType(2)
+	return WithLicenseType(Distribution)
 }
 
 func WithPlugin(mask int) Options {
