@@ -2,31 +2,126 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 )
 
-const context = "spreadjs"
+const context = ""
 
 func main() {
 	// 设置文件服务器路由
-	http.HandleFunc(fmt.Sprintf("/%s/", context), enableCORS(streamFileHandler))
-	// 设置用户数据API路由
-	http.HandleFunc("/api/users", enableCORS(usersHandler))
+	//http.HandleFunc(fmt.Sprintf("/%s/", context), enableCORS(streamFileHandler))
+	//// 设置用户数据API路由
+	//http.HandleFunc("/api/users", enableCORS(usersHandler))
+
+	http.HandleFunc("/license", enableCORS(licenseHandler))
+	http.HandleFunc("/license/", enableCORS(licenseHandler))
+
+	// 创建 HTTP 服务器
+	httpServer := &http.Server{
+		Addr:    ":80",
+		Handler: nil, // 使用默认多路复用器
+	}
+
+	// 创建 HTTPS 服务器
+	httpsServer := &http.Server{
+		Addr:    ":443",
+		Handler: nil, // 使用默认多路复用器
+	}
+
+	// 启动 HTTP 服务器（生产环境可改为重定向到 HTTPS）
+	go func() {
+		log.Println("HTTP 服务器启动，监听端口:80")
+		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("启动 HTTP 服务器失败: %v", err)
+		}
+	}()
+
+	// 启动 HTTPS 服务器
+	go func() {
+		log.Println("HTTPS 服务器启动，监听端口:443")
+		if err := httpsServer.ListenAndServeTLS("cert.pem", "key.pem"); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("启动 HTTPS 服务器失败: %v", err)
+		}
+	}()
+
+	// 优雅关闭
+	waitForShutdown(httpServer, httpsServer)
 
 	// 启动服务器
-	port := "80"
-	fmt.Printf("服务器运行在端口 %s 上...\n", port)
-	pid := os.Getpid()
-	fmt.Printf("当前进程的ID是: %d\n", pid)
-	fmt.Println(fmt.Sprintf("访问 http://localhost/%s/", context))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+	//port := "80"
+	//fmt.Printf("服务器运行在端口 %s 上...\n", port)
+	//pid := os.Getpid()
+	//fmt.Printf("当前进程的ID是: %d\n", pid)
+	//fmt.Println(fmt.Sprintf("访问 http://localhost/%s/", context))
+	//log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+}
+
+func waitForShutdown(servers ...*http.Server) {
+	interruptChan := make(chan os.Signal, 1)
+	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	// 等待中断信号
+	<-interruptChan
+
+	// 优雅关闭所有服务器
+	for _, s := range servers {
+		log.Printf("正在关闭服务器: %s", s.Addr)
+		if err := s.Shutdown(nil); err != nil {
+			log.Printf("关闭服务器失败: %v", err)
+		}
+	}
+
+	log.Println("所有服务器已优雅关闭")
+}
+
+type licenseCapacity struct {
+	Used int `json:"used"`
+	Max  int `json:"max"`
+}
+
+func licenseHandler(writer http.ResponseWriter, request *http.Request) {
+	//writer.Header().Set("Content-Type", "application/octet-stream")
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+
+	// 获取请求路径
+	path := request.URL.Path
+
+	// 处理/license路径
+	if path == "/license" {
+		fmt.Fprintf(writer, "这是 license 主页")
+		return
+	}
+
+	// 处理/license/下的子路径
+	subPath := path[len("/license/"):]
+	switch subPath {
+	case "capacity":
+		capacity := licenseCapacity{
+			Used: 0,
+			Max:  100,
+		}
+		data, _ := json.Marshal(capacity)
+		_, _ = writer.Write(data)
+		//fmt.Fprintf(writer, "这是 capacity 页面")
+	case "deactivate":
+		fmt.Fprintf(writer, "这是 deactivate 页面")
+	case "information":
+		fmt.Fprintf(writer, "这是 information 页面")
+	default:
+		// 处理其他子路径或未知路径
+		fmt.Fprintf(writer, "未知的许可证类型: %s", subPath)
+	}
 }
 
 // enableCORS 中间件添加CORS头
