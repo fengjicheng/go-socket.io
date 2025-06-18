@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -89,17 +90,105 @@ type licenseCapacity struct {
 	Max  int `json:"max"`
 }
 
+var capacity = &licenseCapacity{
+	Used: 0,
+	Max:  100,
+}
+
+type EncryptLic struct {
+	EncryptInfo string `json:"encrypt_info"`
+}
+
+// RequestInfo 封装HTTP请求的关键信息
+type RequestInfo struct {
+	IP            string `json:"ip"`
+	Domain        string `json:"domain"`
+	AppName       string `json:"appName"`
+	ReportID      string `json:"reportID"`
+	ReportVersion string `json:"reportVersion"`
+	Certificate   string `json:"certificate"`
+}
+
+var (
+	licStr = `{"VERSION": "11.0",
+  "MACADDRESS": "fa:16:3e:29:5a:82",
+  "SERIALNUMBER": null,
+  "REGTOOL_SERIAL": "",
+  "MAX_NUMBER": "1",
+  "DEADLINE": 4904159797000,
+  "LISTEN_PORT": null,
+  "APPNAME": "report",
+  "APPCONTENT": "",
+  "UUID": "84434b73942118e89e4b65261435907aae1be1e16f12d2e70b15a42232ec9a33a3b4076736ed576a",
+  "FS_USER": "0",
+  "MOBILE_FS_USER": "0",
+  "PROJECTNAME": "全椒县智慧家庭医生综合管理系统",
+  "COMPANYNAME": "安徽晶奇网络科技有限公司",
+  "CONCURRENCY": "0",
+  "FUNCTION": "101155137800229",
+  "PLUGIN": [],
+  "KEY": "",
+  "REPORTLETSCOUNT": "",
+  "MUTICONNECTION": "1",
+  "OFFICIAL": "true",
+  "TYPE": "FILE",
+  "LASTTIME": "0",
+  "SESSIONID": "",
+  "MAX_NODE": null,
+  "REVISION": null,
+  "DATABASE_TYPE": [""],
+  "REGION": "",
+  "CREATE_TIME": null,
+  "END_USER": "全椒县智慧家庭医生综合管理系统"
+}`
+	lic = &EncryptLic{
+		EncryptInfo: base64.StdEncoding.EncodeToString([]byte(licStr)),
+	}
+)
+
+func getLic() EncryptLic {
+	// 检查文件是否存在
+	//filepath := "FanRuan.lic"
+	//if _, err := os.Stat(filePath); os.IsNotExist(err) {
+	//	return "", fmt.Errorf("文件不存在: %s", filePath)
+	//}
+
+	// 读取文件内容
+	data, err := os.ReadFile("FanRuan.lic")
+	if err != nil {
+		//return "", fmt.Errorf("读取文件失败: %w", err)
+	}
+
+	// 转换为 Base64 编码
+	encryptLic := EncryptLic{
+		EncryptInfo: base64.StdEncoding.EncodeToString(data),
+	}
+	return encryptLic
+}
+
 func licenseHandler(writer http.ResponseWriter, request *http.Request) {
 	//writer.Header().Set("Content-Type", "application/octet-stream")
 	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(http.StatusOK)
+	status := http.StatusOK
 
 	// 获取请求路径
 	path := request.URL.Path
 
 	// 处理/license路径
 	if path == "/license" {
-		fmt.Fprintf(writer, "这是 license 主页")
+		// 4. 解码JSON请求体
+		var info RequestInfo
+		decoder := json.NewDecoder(request.Body)
+		if err := decoder.Decode(&info); err == nil {
+			log.Printf("licenseHandler: %v", info)
+			if capacity.Used < capacity.Max {
+				capacity.Used++
+			}
+			log.Printf("max: %d, used: %d", capacity.Max, capacity.Used)
+		}
+		encryptLic := getLic()
+		data, _ := json.Marshal(encryptLic)
+		_, _ = writer.Write(data)
 		return
 	}
 
@@ -107,21 +196,20 @@ func licenseHandler(writer http.ResponseWriter, request *http.Request) {
 	subPath := path[len("/license/"):]
 	switch subPath {
 	case "capacity":
-		capacity := licenseCapacity{
-			Used: 0,
-			Max:  100,
-		}
 		data, _ := json.Marshal(capacity)
 		_, _ = writer.Write(data)
-		//fmt.Fprintf(writer, "这是 capacity 页面")
 	case "deactivate":
-		fmt.Fprintf(writer, "这是 deactivate 页面")
+		if capacity.Used > 0 {
+			capacity.Used--
+		}
 	case "information":
-		fmt.Fprintf(writer, "这是 information 页面")
+		status = http.StatusNotFound
+		//fmt.Fprintf(writer, "这是 information 页面")
 	default:
-		// 处理其他子路径或未知路径
-		fmt.Fprintf(writer, "未知的许可证类型: %s", subPath)
+		status = http.StatusInternalServerError
 	}
+
+	writer.WriteHeader(status)
 }
 
 // enableCORS 中间件添加CORS头
