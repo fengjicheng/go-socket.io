@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -141,75 +143,67 @@ var (
   "CREATE_TIME": null,
   "END_USER": "全椒县智慧家庭医生综合管理系统"
 }`
-	lic = &EncryptLic{
-		EncryptInfo: base64.StdEncoding.EncodeToString([]byte(licStr)),
-	}
 )
 
-func getLic() EncryptLic {
-	// 检查文件是否存在
-	//filepath := "FanRuan.lic"
-	//if _, err := os.Stat(filePath); os.IsNotExist(err) {
-	//	return "", fmt.Errorf("文件不存在: %s", filePath)
-	//}
-
-	// 读取文件内容
-	data, err := os.ReadFile("FanRuan.lic")
-	if err != nil {
-		//return "", fmt.Errorf("读取文件失败: %w", err)
+func getLic(custom bool) EncryptLic {
+	// 读取原始授权文件内容
+	buf := bytes.Buffer{}
+	data, _ := os.ReadFile("FanRuan.lic")
+	// 自定义授权
+	if custom {
+		data, _ = os.ReadFile("FanRuan3.lic")
 	}
-
+	buf.Write(data)
 	// 转换为 Base64 编码
 	encryptLic := EncryptLic{
-		EncryptInfo: base64.StdEncoding.EncodeToString(data),
+		EncryptInfo: base64.StdEncoding.EncodeToString(buf.Bytes()),
 	}
 	return encryptLic
 }
 
 func licenseHandler(writer http.ResponseWriter, request *http.Request) {
-	//writer.Header().Set("Content-Type", "application/octet-stream")
-	writer.Header().Set("Content-Type", "application/json")
-	status := http.StatusOK
+	var (
+		statusCode   = http.StatusOK
+		info         RequestInfo
+		responseBody []byte
+	)
 
 	// 获取请求路径
 	path := request.URL.Path
-
+	decoder := json.NewDecoder(request.Body)
+	if err := decoder.Decode(&info); err == nil {
+		log.Printf("licenseHandler: %v", info)
+	}
 	// 处理/license路径
 	if path == "/license" {
-		// 4. 解码JSON请求体
-		var info RequestInfo
-		decoder := json.NewDecoder(request.Body)
-		if err := decoder.Decode(&info); err == nil {
-			log.Printf("licenseHandler: %v", info)
-			if capacity.Used < capacity.Max {
-				capacity.Used++
+		encryptLic := getLic(true)
+		responseBody, _ = json.Marshal(encryptLic)
+		if capacity.Used < capacity.Max {
+			capacity.Used++
+		}
+		log.Printf("max: %d, used: %d", capacity.Max, capacity.Used)
+	} else if strings.HasPrefix(path, "/license/") {
+		// 处理/license/下的子路径
+		subPath := path[len("/license/"):]
+		switch subPath {
+		case "capacity":
+			responseBody, _ = json.Marshal(capacity)
+		case "deactivate":
+			if capacity.Used > 0 {
+				capacity.Used--
 			}
-			log.Printf("max: %d, used: %d", capacity.Max, capacity.Used)
+		case "information":
+			statusCode = http.StatusNotFound
+		default:
+			statusCode = http.StatusInternalServerError
 		}
-		encryptLic := getLic()
-		data, _ := json.Marshal(encryptLic)
-		_, _ = writer.Write(data)
-		return
 	}
 
-	// 处理/license/下的子路径
-	subPath := path[len("/license/"):]
-	switch subPath {
-	case "capacity":
-		data, _ := json.Marshal(capacity)
-		_, _ = writer.Write(data)
-	case "deactivate":
-		if capacity.Used > 0 {
-			capacity.Used--
-		}
-	case "information":
-		status = http.StatusNotFound
-		//fmt.Fprintf(writer, "这是 information 页面")
-	default:
-		status = http.StatusInternalServerError
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(statusCode)
+	if responseBody != nil {
+		_, _ = writer.Write(responseBody)
 	}
-
-	writer.WriteHeader(status)
 }
 
 // enableCORS 中间件添加CORS头
