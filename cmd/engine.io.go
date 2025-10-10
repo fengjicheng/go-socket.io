@@ -1,10 +1,11 @@
 package main
 
 import (
-	"go-socket.io/engineio"
-	"go-socket.io/logger"
 	"log"
 	"net/http"
+
+	"go-socket.io/engineio"
+	"go-socket.io/logger"
 )
 
 func main() {

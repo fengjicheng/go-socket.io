@@ -3,9 +3,10 @@ package spread
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_decode(t *testing.T) {
@@ -77,4 +78,14 @@ func Test_hexLic(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "24AC5981", hash)
 	assert.Equal(t, 615274881, int(num))
+}
+
+func Test_Cipher(t *testing.T) {
+	s := "Hello World! 007，欢迎来到编程世界。"
+	runes := []rune(s)
+
+	for i, r := range runes {
+		runes[i] = characterConversion(r, 1)
+	}
+	println(string(runes))
 }

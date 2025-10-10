@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go-socket.io/engineio/session"
-	"go-socket.io/engineio/transport"
-	"go-socket.io/logger"
 	"log"
 	"net/http"
 	"sync"
 	"time"
+
+	"go-socket.io/engineio/session"
+	"go-socket.io/engineio/transport"
+	"go-socket.io/logger"
 )
 
 // Server is instance of server
