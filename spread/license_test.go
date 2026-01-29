@@ -2,9 +2,10 @@ package spread
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -63,7 +64,7 @@ func TestDistributionLicense(t *testing.T) {
 	assert.NotNil(t, data)
 	//assert.Equal(t, "20250515 043116", data.CreateTime)
 	//assert.Equal(t, "20250525", data.Expiration)
-	file, err := os.OpenFile("license.js", os.O_TRUNC|os.O_WRONLY, 0644)
+	file, err := os.OpenFile("license.js", os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
 	assert.Nil(t, err)
 	_ = sjs.Output(os.Stdout)
 	println()
