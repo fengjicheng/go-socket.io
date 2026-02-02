@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -30,11 +29,9 @@ func TestGenKeys(t *testing.T) {
 }
 
 func TestTime(t *testing.T) {
-	days := RelativeDays(0)
-	fmt.Println(days)
-
-	days = RelativeDays(time.Hour * 24 * 7)
-	fmt.Println(days)
+	l1, l2 := RelativeDays(time.Hour * 24 * 7)
+	assert.Equal(t, 7, l2-l1)
+	fmt.Println(l1, l2)
 }
 
 func TestName(t *testing.T) {
@@ -69,9 +66,12 @@ func TestLicence(t *testing.T) {
 		buf: bytes.NewBuffer(nil),
 	}
 
+	l1, l2 := RelativeDays(time.Hour * 24 * 7)
+	l.activeTime = l1
+	l.expiryTime = l2
+
 	l.build()
 
-	r := strings.Split(l.buf.String(), ",")
-	log.Print(r)
+	log.Print(l.buf.String())
 
 }
