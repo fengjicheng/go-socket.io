@@ -2,7 +2,11 @@ module go-socket.io
 
 go 1.24
 
-require github.com/stretchr/testify v1.10.0
+require (
+	github.com/google/uuid v1.6.0
+	github.com/stretchr/testify v1.10.0
+	github.com/wenzhenxi/gorsa v0.0.0-20230530123828-0320cce15d81
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
