@@ -54,24 +54,26 @@ func TestLicence(t *testing.T) {
 	uid, err := uuid.Parse("6bf630ea-22d3-47b5-bb9e-2102f3c52186")
 
 	l := license{
-		a:            false, // 是否过期
+		a:            true,
 		uuid:         uid,
 		serialNumber: ser.MaskValue(),
-		hostname:     "",
+		hostname:     "", // Machine Environment mismatch.
 		activeTime:   0,
 		f:            true, // 是否使用
 		expiryTime:   0,
-		version:      "Standard",
+		version:      "Standard", // Standard Unlimited
 
 		buf: bytes.NewBuffer(nil),
 	}
 
-	l1, l2 := RelativeDays(time.Hour * 24 * 7)
+	l1, l2 := RelativeDays(time.Hour * 24 * 1)
 	l.activeTime = l1
 	l.expiryTime = l2
 
 	l.build()
 
 	log.Print(l.buf.String())
+
+	_ = os.WriteFile("/Users/wuyujie/.local/share/GrapeCity/6bf630ea-22d3-47b5-bb9e-2102f3c52186/.license", l.buf.Bytes(), 0644)
 
 }
