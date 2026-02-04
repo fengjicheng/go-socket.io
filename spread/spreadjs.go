@@ -30,7 +30,7 @@ func characterConversion(r rune, offset int) rune {
 		digit := int(r - '0')
 		// 执行偏移操作，确保结果在0-9范围内
 		digit = (digit + offset + 10) % 10
-		// 转回rune类型的数字字符
+		// 转回 rune 类型的数字字符
 		return rune('0' + digit)
 	}
 	return r

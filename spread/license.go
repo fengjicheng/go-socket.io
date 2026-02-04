@@ -44,14 +44,14 @@ type License interface {
 type PrefixGen = func(data Data) string
 
 type options struct {
-	major    int       // 主版本号
+	major    uint      // 主版本号
 	sep      string    // 分隔符
 	prefixFn PrefixGen // 前缀生成函数
 
 	createdAt time.Time     // 创建时间
 	duration  time.Duration // 有效时长
 
-	plugins     int    // 插件编码数字和
+	plugins     uint   // 插件编码数字和
 	description string // 描述
 
 	domains        []string // 域名
@@ -101,35 +101,7 @@ func (l *license) HexHash() string {
 	enc, _ := json.Marshal(l.data)
 	// <前缀>#<分隔符><授权JSON数据>
 	s := fmt.Sprintf("%s#%s%s", l.PrefixGenerate(*l.data), l.opts.sep, string(enc))
-	var n, e, i, a int32
-	n = 0
-	e = 5381
-	i = 0
-
-	// 转换为 rune 切片以支持完整 Unicode
-	runes := []rune(s)
-
-	// 从后向前遍历每个 Unicode 字符
-	for r := len(runes) - 1; r >= 0; r-- {
-		o := runes[r] // 获取完整 Unicode 码点
-		// 第一种哈希计算方式（类似 DJB2 算法）
-		e = o + ((e << 5) + e)
-		// 第二种哈希计算方式（自定义位运算组合）
-		n = o + (n << 6) + (n << 16) - n
-		// 第三种哈希计算方式（类似 SDBM 算法）
-		i = o + ((i << 5) - i)
-		i &= i // 在 Go 中这行没有实际作用，保留以匹配原始逻辑
-		// 合并三个中间哈希值
-		a = n ^ e ^ i
-	}
-
-	// 如果结果为负数，则取反
-	if a < 0 {
-		a = ^a
-	}
-
-	// 转换为大写十六进制字符串
-	return strings.ToUpper(fmt.Sprintf("%x", a))
+	return hexHash(s)
 }
 
 func (l *license) Read(lic string) License {
@@ -241,7 +213,7 @@ func (l *license) build() {
 		l.data.Domains = ""
 	} else {
 		dms := deduplicate(opts.domains)
-		designer := int(PluginDesigner)
+		designer := PluginDesigner.BitMask()
 		if (opts.plugins & designer) == designer {
 			dms = append(dms, "designer/0.0.0.0")
 		}
@@ -251,33 +223,27 @@ func (l *license) build() {
 	}
 
 	// 3. 构建 data
-	var products []*Product
-	if ps, ok := prods[opts.major]; ok {
-		for _, p := range ps {
-			if p.designer == false {
-				// 基础功能
-				products = append(products, p)
+	var sjsProducts []*Product
+	for _, prod := range products {
+		if prod.Major == opts.major && !prod.IsSpreadJSDesigner() {
+			sjsProducts = append(sjsProducts, prod)
+			break
+		}
+	}
+
+	designer := PluginDesigner.BitMask()
+	if (opts.plugins & designer) == designer {
+		for _, prod := range products {
+			if prod.Major == opts.major && prod.IsSpreadJSDesigner() {
+				sjsProducts = append(sjsProducts, prod)
 				break
 			}
 		}
 	}
-
-	designer := int(PluginDesigner)
-	if (opts.plugins & designer) == designer {
-		if ps, ok := prods[opts.major]; ok {
-			for _, p := range ps {
-				if p.designer == true {
-					// web designer 在线表格编辑器
-					products = append(products, p)
-					break
-				}
-			}
-		}
-	}
-	l.data.Products = products
+	l.data.Products = sjsProducts
 
 	// 2 todo 不知道怎么生成，暂不处理
-	//l.r = 0
+	l.r = 0
 
 	// 3. 生成 hash
 	h := l.HexHash()
@@ -320,6 +286,12 @@ func ReadLicense(txt string, sep ...string) License {
 	lic := &license{opts: *o}
 	lic.Read(txt)
 	return lic
+}
+
+func WithMajor(version int) Options {
+	return func(opts *options) {
+		opts.major = uint(version)
+	}
 }
 
 func WithSeparator(sep string) Options {
@@ -404,7 +376,7 @@ func WithDistributionLicense() Options {
 	return WithLicenseType(Distribution)
 }
 
-func WithPlugin(mask int) Options {
+func WithPlugin(mask uint) Options {
 	return func(opts *options) {
 		opts.plugins = opts.plugins | mask
 	}
@@ -417,7 +389,7 @@ func WebDesignerLicense() Options {
 }
 
 func WithWebDesigner() Options {
-	return WithPlugin(int(PluginDesigner))
+	return WithPlugin(PluginDesigner.BitMask())
 }
 
 func deduplicate(slice []string) []string {

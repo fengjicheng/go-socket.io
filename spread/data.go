@@ -1,18 +1,42 @@
 package spread
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
+
+var (
+	products = []*Product{
+		{18, "Spread JS v.18", "BJIH"},
+		{18, "SpreadJS-Designer-Addon v.18", "33Y9"},
+		{19, "Spread JS(CN) v.19", "WQC1"},
+		{19, "SpreadJS-Designer-Addon(CN) v.19", "F9TK"},
+	}
+
+	PluginDesigner    SJSPlugin = &plugin{"表格编辑器", "Designer", 1}
+	PluginPivotTable  SJSPlugin = &plugin{"数据透视表", "PivotTable", 2}
+	PluginReportSheet SJSPlugin = &plugin{"报表", "ReportSheet", 3}
+	PluginGanttSheet  SJSPlugin = &plugin{"甘特图", "GanttSheet", 4}
+	PluginTableSheet  SJSPlugin = &plugin{"集算表", "TableSheet", 5}
+	PluginDataChart   SJSPlugin = &plugin{"数据图表", "DataChart", 6}
+
+	PluginCollaboration SJSPlugin = &plugin{"协同插件", "Collaboration", 7}
+	PluginAI            SJSPlugin = &plugin{"AI 智能助手", "AI", 8}
+
+	// V18Plugins V18 支持插件
+	V18Plugins = 1<<6 - 1
+	// V19Plugins V19 支持插件
+	V19Plugins = 1<<8 - 1
+)
 
 type Product struct {
-	Name     string `json:"N"` // 产品名称
-	Code     string `json:"C"` // 产品代码
-	designer bool
+	Major uint   `json:"-"`
+	Name  string `json:"N"` // 产品名称
+	Code  string `json:"C"` // 产品代码
 }
 
-var prods = map[int][]*Product{
-	18: {
-		&Product{"Spread JS v.18", "BJIH", false},
-		&Product{"SpreadJS-Designer-Addon v.18", "33Y9", true},
-	},
+func (p *Product) IsSpreadJSDesigner() bool {
+	return strings.Contains(p.Name, "SpreadJS-Designer")
 }
 
 type Data struct {
@@ -32,58 +56,84 @@ type Annual struct {
 	PluginFlags  []string `json:"flg"` // 插件标志
 }
 
-// Plugin 在线表格编辑器 Designer
-// 数据透视表 / PivotTable
-// 报表 / ReportSheet
-// 甘特图 / GanttSheet
-// 集算表 / TableSheet
-// 数据图表 / DataChart
+// SJSPlugin
+// -------------------------------------------------
+// V8
+// 表格编辑器 	Designer
+// 数据透视表		PivotTable
+// 报表			ReportSheet
+// 甘特图		GanttSheet
+// 集算表		TableSheet
+// 数据图表		DataChart
+// -------------------------------------------------
+// V9
+// 协同插件		Collaboration
+// AI 智能助手	AI
+// -------------------------------------------------
+type SJSPlugin interface {
+	// Name 插件名称
+	Name() string
+	// Code 插件标识
+	Code() string
+	// BitMask 插件位掩码
+	BitMask() uint
+	// IsSupport 判断该产品是否支持
+	IsSupport(product Product) bool
 
-type Plugin int
-
-const (
-	PluginDesigner    Plugin = 1 << 0
-	PluginPivotTable  Plugin = 1 << 1
-	PluginReportSheet Plugin = 1 << 2
-	PluginGanttSheet  Plugin = 1 << 3
-	PluginTableSheet  Plugin = 1 << 4
-	PluginDataChart   Plugin = 1 << 5
-)
-
-func (p Plugin) String() string {
-	switch p {
-	case PluginDesigner:
-		return "Designer"
-	case PluginPivotTable:
-		return "PivotTable"
-	case PluginReportSheet:
-		return "ReportSheet"
-	case PluginGanttSheet:
-		return "GanttSheet"
-	case PluginTableSheet:
-		return "TableSheet"
-	case PluginDataChart:
-		return "DataChart"
-	}
-	return fmt.Sprintf("%d", p)
+	fmt.Stringer
 }
 
-func PluginsFrom(mask int) []string {
-	plugins := make([]Plugin, 0)
-	add(&plugins, mask, PluginReportSheet)
+type plugin struct {
+	name string
+	code string
+	mask uint
+}
+
+func (p *plugin) Name() string {
+	return p.name
+}
+
+func (p *plugin) Code() string {
+	return p.code
+}
+
+func (p *plugin) BitMask() uint {
+	return 1 << (p.mask - 1)
+}
+
+func (p *plugin) IsSupport(product Product) bool {
+	m := 1 << (p.BitMask() - 1)
+	if product.Major == 18 {
+		return m&V18Plugins == m
+	} else if product.Major == 19 {
+		return m&V19Plugins == m
+	}
+	return false
+}
+
+func (p *plugin) String() string {
+	return p.code
+}
+
+func PluginsFrom(mask uint) []string {
+	plugins := make([]SJSPlugin, 0)
 	add(&plugins, mask, PluginPivotTable)
+	add(&plugins, mask, PluginReportSheet)
 	add(&plugins, mask, PluginGanttSheet)
 	add(&plugins, mask, PluginTableSheet)
 	add(&plugins, mask, PluginDataChart)
+
+	add(&plugins, mask, PluginCollaboration)
+	add(&plugins, mask, PluginAI)
 	result := make([]string, len(plugins))
-	for i, plugin := range plugins {
-		result[i] = plugin.String()
+	for i, sjsPlugin := range plugins {
+		result[i] = sjsPlugin.String()
 	}
 	return result
 }
 
-func add(plugins *[]Plugin, mask int, plugin Plugin) {
-	if mask&int(plugin) == int(plugin) {
+func add(plugins *[]SJSPlugin, mask uint, plugin SJSPlugin) {
+	if mask&plugin.BitMask() == plugin.BitMask() {
 		*plugins = append(*plugins, plugin)
 	}
 }

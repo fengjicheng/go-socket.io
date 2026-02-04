@@ -1,9 +1,10 @@
 package spread
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // SpreadJS 授权
@@ -13,6 +14,25 @@ var (
 	designerLic     = "Designer-E336191996128716#B1RRf9mSEVFVOhmd7J6LvQme4dTRzR7aUFlb6VmSrIFbCNlZrgVWFJ7dYJVejtmRsNWbkJGSwcTZBNHb6ZXZFFGUmtCM6l4aaxEZXNTVLxmaXVjdpZ6UwAHahlXR0FVSP36LB5mapFkcxYDeZZzLrBnbwRnb5IHRZNDVEZlc4UDZxAHMRNzahV7b59GUypGU0tmbGFGNplXV9J7N7N7LvEHWvpEbzAHcmFTb5hXSi5WSPJzKxInQXhzQ5VVdo3CNSRjMnNzdL9UVwIHUalUNBtWRrIFc4RDWCJXOXJzTyE4T8IUNvtyd5dTavYHTHZjahtGUx4kd6EnNzNzLVZzMnVTZnVVNxpVR5okMI9UTiojITJCLiY4QFRzN5YENiojIIJCL6cDO6kjN6UzN0IicfJye35XX3JCSJpkQiojIDJCLigTMuYHITpEIkFWZyB7UiojIOJyebpjIkJHUiwiI6UTMxIDMggDM5ATNyAjMiojI4J7QiwiI6AjNwUjMwIjI0ICc8VkIsICMuAjLw8CMvIXZudWazVGZiojIz5GRiwiI8+Y9sWY9QmZ0Jyp93uL9hKI0Aqo9Re09cu19R619HWa96mp930b9J0a9iojIh94QiwSZ5JHd0ICb6VkIsIiNxcDOyEjN9kTM9EjNzMjI0ICZJJCL355W0IyZsZmIsUWdyRnOiI7ckJye0ICbuFkI1pjIEJCLi4TPnJnVrtEaOpWV6QDVyFkVDVGZChnR5FXdMNnYOBjd0lHSxN7dZhGWFljdxN6L6IFZxoVWNlWbklTU6xkMP3iNW9ENr3SaH32TMQ"
 	designerFullLic = "10.1.150.152,E815289921648826#B1ucYQxM6QZVzUsdHO9R6an3Ea4NzLIZFeQ5GWlhTRllXc9hGdTl7Z7cza8EUcwJkTORnTDNFT7hjRMZ6QMF4QVh5SvI6LY34LSxmYvoHOz3WTSx6avllSZlkZaV4RYF4SWNmVuR4T8JGeqF7SK3Cd4Z4dmhje7QjQmd4VIVzdO54a6gmej3WaEd4KQFEa9FHREd5L7pFW4knYt5GUqFGZBxGS7tmayFDU09mM9Q5URJTOPp7VpdjaIRGaZFkcYJkUDVzd4gjWHJjNI36ZCFkQYhHcOdmTkJDM6UTYjpEMkF6Qyd7UE5GTmlTM8RUVlJDMRpFV5pXezZkcEN7NvJ4aotCNZJlI0IyUiwiIxIzNCV4Q5EjI0ICSiwyN7MTMygDN4AjM0IicfJye=#Qf35VfikTWzMjI0IyQiwiI8EjL6BibvRGZB5icl96ZpNXZE5yUKRWYlJHcTJiOi8kI1tlOiQmcQJCLiYTMxMDNwASNxUDM5IDMyIiOiQncDJCLiUjM5ATNyAjMiojIwhXRiwiIyUTMuATNx8SMuATMiojIz5GRiwiI8+Y9sWY9QmZ0Jyp93uL9hKI0Aqo9Re09cu19R619HWa96mp930b9J0a9iojIh94QiwSZ5JHd0ICb6VkIsIiNygDO4YTMykTO8ITNxgjI0ICZJJye0ICRiwiI34TQPRURBl6NWd6Yn3GeMdEWBJlNStmZGtUWxQnTDdHMqhXc9cTelRzMYxWR7Y5Y0djQ6IFZQdDZFt6NYJFMttUbSRFcRBTV7M7ZxJ7VMBTVxlde"
 )
+
+func TestPlugins(t *testing.T) {
+	plugins := []SJSPlugin{
+		PluginDesigner,
+		PluginPivotTable,
+		PluginReportSheet,
+		PluginGanttSheet,
+		PluginTableSheet,
+		PluginDataChart,
+		PluginCollaboration,
+		PluginAI,
+	}
+	for _, prod := range products {
+		for _, p := range plugins {
+			t.Log(prod.Name, "Support Plugin", p.Code(), p.Name(), p.BitMask(), p.IsSupport(*prod))
+		}
+	}
+
+}
 
 func TestSpreadJSLicense_Decrypt(t *testing.T) {
 	//	{
@@ -67,7 +87,7 @@ func TestSpreadJSLicense_Decrypt(t *testing.T) {
 	data.Evaluation = false
 	data.Annual.Distribution = true
 	data.Expiration = "20250517"
-	data.Products = prods[18]
+	data.Products = products[:2]
 
 	_ = sjs.Output(os.Stdout)
 	println()
@@ -81,16 +101,28 @@ func TestDesignerLic(t *testing.T) {
 	assert.Equal(t, "designer/0.0.0.0", data.Domains)
 
 	sjs.Read(designerFullLic)
-	data.Products = prods[18]
+	data.Products = products[:2]
 	assert.Equal(t, 2, len(data.Products))
 	assert.Equal(t, "BJIH", data.Products[0].Code)
 	assert.Equal(t, "33Y9", data.Products[1].Code)
 	_ = sjs.Output(os.Stdout)
 }
 
-func TestInternal(t *testing.T) {
-	l1 := ReadLicense(GcSpreadSheetsLicenseKey)
-	l2 := ReadLicense(GcSpreadSheetsDesignerLicenseKey)
+func TestInternalV18(t *testing.T) {
+	l1 := ReadLicense(GCSpreadSheetsLicenseKeyV18)
+	l2 := ReadLicense(GCSpreadSheetsDesignerLicenseKeyV18)
+
+	_ = l1.Output(os.Stdout)
+	println()
+
+	_ = l2.Output(os.Stdout)
+	println()
+
+}
+
+func TestInternalV19(t *testing.T) {
+	l1 := ReadLicense(GCSpreadSheetsLicenseKeyV19)
+	l2 := ReadLicense(GCSpreadSheetsDesignerLicenseKeyV19)
 
 	_ = l1.Output(os.Stdout)
 	println()
